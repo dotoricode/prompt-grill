@@ -1,18 +1,26 @@
 # prompt-grill
 
-Turn vague natural-language work requests into clean, AI-friendly XML-structured prompts — by **grilling you on the missing slots first**.
+A Claude Code skill that turns half-formed work requests into structured prompts your agent can actually execute against. It interviews you about the parts you skipped, then emits an XML prompt with five named slots.
 
-A [Claude Code](https://www.anthropic.com/claude-code) skill in the spirit of `grill-me`: one focused question at a time, code-first exploration over user interrogation, and an explicit execute gate before any work starts.
+## Why I built this
 
----
+I kept losing time the same way: I'd type a request like *"이거 리팩터해줘"* into Claude Code, the agent would charge ahead with assumptions, and I'd spend the next ten minutes correcting course because I forgot to mention the constraint that mattered. Half my prompts were missing a success criterion. Most were missing the constraint I cared about most.
 
-## Why
+So I built `prompt-grill`. It scores my request against five slots — Goal, Context, Constraints, Success, Output — and only asks me about the ones I left empty. The questions are short and one at a time. By the time I see the structured prompt, the things I would have forgotten are already in it.
 
-LLM agents do better work when prompts are anchored. A request like *"이거 좀 정리해줘"* leaves Goal / Context / Constraints / Success / Output all empty — the agent has to either guess or hallucinate. `prompt-grill` short-circuits that: it scores your request against a 5-slot contract, asks only about the weakest slots, then emits a structured prompt the agent can actually execute against.
+I use it almost daily now. It catches the slot I would have missed maybe four times out of five.
 
-## The 5-slot contract
+## How it works
 
-Every translated prompt has exactly five XML tags:
+You type `/prompt-grill <vague request>`. The skill:
+
+1. Reads your request and silently scores each of the five slots from 0 to 2.
+2. Reads the codebase for any slot that code can answer (file paths, current behavior). It will not ask you what `Grep` or `Read` could tell it.
+3. If slots are still empty, asks you about the weakest one. One question. Then the next weakest. Capped at five rounds.
+4. Emits an XML prompt in a fenced block. Anything you refused to clarify is marked `(unspecified — clarify during execution)`. The skill does not invent values.
+5. Asks whether to run that prompt now, revise a single slot, or hand the prompt to you to use elsewhere.
+
+## The 5 slots
 
 | Slot | Tag | What it captures |
 |------|-----|------------------|
@@ -22,60 +30,75 @@ Every translated prompt has exactly five XML tags:
 | Success | `<success_criteria>` | Testable conditions for completion |
 | Output | `<output_format>` | Deliverable form (diff, file, list, plan…) |
 
-## Workflow
+## Example
 
-1. **Receive** — read your raw request.
-2. **Assess** — score each slot 0–2 silently. Sum sets grill depth (8–10 skip, 5–7 light, 0–4 medium).
-3. **Explore first** — search the codebase for anything code can answer (file paths, current behavior). Never ask you what `Grep`/`Read` would tell.
-4. **Grill** — `AskUserQuestion`, one slot at a time, naming why it's weakest. Hard cap 5 rounds.
-5. **Translate** — emit the XML prompt in a fenced block. Unspecified slots are marked `(unspecified — clarify during execution)`, never invented.
-6. **Execute gate** — ask whether to run the prompt now, revise a slot, or just hand it off.
+**Before** (what I actually typed):
+
+> 로그인 모듈 좀 정리해줘
+
+**After** the grill (3 questions, ~30 seconds):
+
+```xml
+<goal>Refactor src/auth/login.ts to remove the duplicated session validation block.</goal>
+<context>
+- File: src/auth/login.ts (4 functions, validateSession appears in 3)
+- Callers: src/api/login.controller.ts, src/middleware/auth.ts
+- Existing tests: tests/auth/login.test.ts (12 cases passing)
+</context>
+<constraints>
+- Public API of login() must not change
+- No new dependencies
+- Keep TypeScript strict mode passing
+</constraints>
+<success_criteria>
+- validateSession defined once
+- All 12 existing tests still pass
+- No new lint warnings
+</success_criteria>
+<output_format>Diff against current main, with a short note on what moved where.</output_format>
+```
+
+The "Constraints" line about the public API is the one I would have forgotten. It is the line that matters most.
 
 ## Triggers
 
-The skill only fires on **explicit invocation**:
+The skill only fires when you ask for it:
 
 - `/prompt-grill`
 - `prompt-grill`
 - *"프롬프트 다듬어줘"*, *"grill 후 변환"*, *"AI가 알아듣게 바꿔줘"*, *"이 작업 명확하게"*
 
+There is no auto-trigger.
+
 ## Install
 
-### Option A — clone directly into Claude Code's skills directory
+Clone into Claude Code's skills directory:
 
 ```bash
 git clone https://github.com/dotoricode/prompt-grill.git ~/.claude/skills/prompt-grill
 ```
 
-(Windows PowerShell: `git clone https://github.com/dotoricode/prompt-grill.git $env:USERPROFILE\.claude\skills\prompt-grill`)
+Windows PowerShell:
 
-### Option B — clone elsewhere, then copy
+```powershell
+git clone https://github.com/dotoricode/prompt-grill.git $env:USERPROFILE\.claude\skills\prompt-grill
+```
+
+Then run `/skills` inside Claude Code. `prompt-grill` should appear in the list.
+
+### OpenCode
+
+OpenCode also reads `~/.claude/skills/`, so the same clone works. If you prefer the OpenCode-native path:
 
 ```bash
-git clone https://github.com/dotoricode/prompt-grill.git
-cp -r prompt-grill ~/.claude/skills/prompt-grill
+git clone https://github.com/dotoricode/prompt-grill.git ~/.config/opencode/skills/prompt-grill
 ```
-
-Verify Claude Code sees it:
-
-```
-/skills
-```
-
-…and `prompt-grill` should appear in the list.
 
 ## Optional nudge hook
 
-The repo ships a `UserPromptSubmit` hook (`hooks/nudge.mjs`) that **suggests** invoking the skill when a prompt looks ambiguous (≥3 empty slots, short, no file-path anchors). It is advisory only:
+The repo ships a `UserPromptSubmit` hook at `hooks/nudge.mjs`. When your prompt looks ambiguous (three or more empty slots, short, no file path), the hook prints a one-line reminder suggesting `/prompt-grill`. It does not modify your prompt, does not call the skill, and silences itself after three unacknowledged nudges per session.
 
-- Never auto-executes the skill
-- Never modifies your prompt
-- Yields immediately to OMC magic keywords
-- Self-silences after 3 unacknowledged nudges per session
-
-### Enable it
-
-Add the following to `~/.claude/settings.json`:
+To enable, add this to `~/.claude/settings.json`:
 
 ```json
 {
@@ -94,11 +117,9 @@ Add the following to `~/.claude/settings.json`:
 }
 ```
 
-(Windows: replace `~/` with the absolute path, e.g. `C:\\Users\\<you>\\.claude\\skills\\prompt-grill\\hooks\\nudge.mjs`.)
+On Windows, use the absolute path: `C:\\Users\\<you>\\.claude\\skills\\prompt-grill\\hooks\\nudge.mjs`.
 
-### Disable it
-
-Either remove the hook entry, or set an env var (the settings.json schema doesn't allow custom top-level keys, so put it under `env`):
+To disable without removing the entry, set an environment variable in the same settings file:
 
 ```json
 {
@@ -108,22 +129,22 @@ Either remove the hook entry, or set an env var (the settings.json schema doesn'
 }
 ```
 
-`DISABLE_OMC=1` also disables the nudge.
+`DISABLE_OMC=1` disables the nudge as well.
 
-## Hard rules (skill behavior)
+## Skill behavior contract
 
-- One question at a time — never batch
-- Explore codebase before asking the user what code can answer
-- Never silently invent constraints/success criteria — mark unspecified slots explicitly
-- Never auto-execute without the explicit "Execute now" approval gate
-- Never recurse: if invoked from inside a prompt-grill execution, the skill refuses
+- One question at a time. The skill will not batch.
+- The skill reads code before it asks you anything code could answer.
+- Slots you refuse to clarify are marked unspecified, not guessed.
+- The skill never starts the actual work without the explicit "Execute now" approval.
+- The skill refuses to recurse: if it is already running, a second invocation is rejected.
 
 ## Related
 
-- [`grill-me`](https://github.com/obra/superpowers) — the relentless interview pattern this skill borrows from
-- `oh-my-claudecode:deep-interview` — heavier, math-gated cousin for complex specs needing a written spec file
-- `write-a-skill` — the meta-skill that produced this one
+- [`grill-me`](https://github.com/obra/superpowers) — the interview pattern this skill is based on.
+- `oh-my-claudecode:deep-interview` — heavier cousin for full spec documents.
+- `write-a-skill` — used to scaffold this skill.
 
 ## License
 
-MIT — see [`LICENSE`](./LICENSE).
+MIT. See [`LICENSE`](./LICENSE).
