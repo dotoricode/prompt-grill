@@ -4,7 +4,7 @@ A Claude Code skill that turns half-formed work requests into structured prompts
 
 ## Why I built this
 
-I kept losing time the same way: I'd type a request like *"이거 리팩터해줘"* into Claude Code, the agent would charge ahead with assumptions, and I'd spend the next ten minutes correcting course because I forgot to mention the constraint that mattered. Half my prompts were missing a success criterion. Most were missing the constraint I cared about most.
+I kept losing time the same way: I'd type a request like *"refactor this module"* into Claude Code, the agent would charge ahead with assumptions, and I'd spend the next ten minutes correcting course because I forgot to mention the constraint that mattered. Half my prompts were missing a success criterion. Most were missing the constraint I cared about most.
 
 So I built `prompt-grill`. It scores my request against five slots — Goal, Context, Constraints, Success, Output — and only asks me about the ones I left empty. The questions are short and one at a time. By the time I see the structured prompt, the things I would have forgotten are already in it.
 
@@ -20,6 +20,16 @@ You type `/prompt-grill <vague request>`. The skill:
 4. Emits an XML prompt in a fenced block. Anything you refused to clarify is marked `(unspecified — clarify during execution)`. The skill does not invent values.
 5. Asks whether to run that prompt now, revise a single slot, or hand the prompt to you to use elsewhere.
 
+## Why XML
+
+Claude is trained on prompts that use XML tags as structural cues, and Anthropic's own prompt-engineering guide recommends them whenever the model needs to treat sections as distinct. I picked tags over markdown headings or YAML for three practical reasons:
+
+- **Boundaries are unambiguous.** A line that starts with `## Constraints` can be confused with content the user pasted in. `<constraints>...</constraints>` cannot.
+- **Slots are referenceable.** During execution the agent can say "the public-API rule in `<constraints>`" and point at exactly one place. Markdown sections do not survive that kind of reference.
+- **One slot is easy to revise.** When the execute gate offers "revise slot X", the skill rewrites only that tag. The rest of the prompt stays byte-identical.
+
+The five tags map to the five slots verbatim. No nesting, no attributes, no hidden conventions.
+
 ## The 5 slots
 
 | Slot | Tag | What it captures |
@@ -34,7 +44,7 @@ You type `/prompt-grill <vague request>`. The skill:
 
 **Before** (what I actually typed):
 
-> 로그인 모듈 좀 정리해줘
+> clean up the login module
 
 **After** the grill (3 questions, ~30 seconds):
 
@@ -66,7 +76,7 @@ The skill only fires when you ask for it:
 
 - `/prompt-grill`
 - `prompt-grill`
-- *"프롬프트 다듬어줘"*, *"grill 후 변환"*, *"AI가 알아듣게 바꿔줘"*, *"이 작업 명확하게"*
+- localized trigger phrases (see [`SKILL.md`](./SKILL.md))
 
 There is no auto-trigger.
 

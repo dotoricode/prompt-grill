@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-05-10
+
+### Added
+- "Why XML" section explaining the choice of XML tags over markdown/YAML.
+
+### Changed
+- Removed Korean phrases from README (English-only); skill triggers in Korean still listed in `SKILL.md`.
+
 ## [0.1.1] - 2026-05-10
 
 ### Changed
