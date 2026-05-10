@@ -151,7 +151,7 @@ To disable without removing the entry, set an environment variable in the same s
 
 ## Related
 
-- [`grill-me`](https://github.com/obra/superpowers) — the interview pattern this skill is based on.
+- [`grill-me`](https://github.com/mattpocock/skills) by Matt Pocock — the interview pattern this skill is based on.
 - `write-a-skill` — used to scaffold this skill.
 
 ## License
