@@ -1,6 +1,6 @@
 ---
 name: prompt-grill
-description: Convert vague natural-language work requests into AI-friendly XML-structured prompts, grilling the user grill-me-style on missing slots before translation. Use when user invokes /prompt-grill, says "프롬프트 다듬어줘" / "grill 후 변환" / "AI가 알아듣게 바꿔줘" / "prompt-grill", or hands off a vague task they want sharpened before execution.
+description: Convert vague natural-language work requests into AI-friendly XML-structured prompts, grilling the user grill-me-style on missing slots before translation. Use when user invokes /prompt-grill, says "프롬프트 다듬어줘 (sharpen this prompt)" / "grill 후 변환 (grill then translate)" / "AI가 알아듣게 바꿔줘 (make it AI-friendly)" / "prompt-grill", or hands off a vague task they want sharpened before execution.
 ---
 
 # prompt-grill
@@ -13,11 +13,11 @@ Only on **explicit invocation**. Do NOT auto-fire on every vague request.
 
 Triggers:
 - `/prompt-grill`, `prompt-grill`
-- "프롬프트 다듬어줘", "grill 후 변환", "AI가 알아듣게 바꿔줘", "이 작업 명확하게"
+- "프롬프트 다듬어줘" (sharpen this prompt), "grill 후 변환" (grill then translate), "AI가 알아듣게 바꿔줘" (make it AI-friendly), "이 작업 명확하게" (clarify this task)
 
 ### Optional nudge hook
 
-A companion `UserPromptSubmit` hook (`hooks/nudge.mjs`) **may suggest** invocation when a prompt looks ambiguous (≥3 empty slots, short length, no file-path anchors). The hook only injects a short reminder — it never auto-executes the skill, never modifies the prompt, and yields immediately to OMC magic keywords. The user must still type a trigger to start the workflow.
+A companion `UserPromptSubmit` hook (`hooks/nudge.mjs`) **may suggest** invocation when a prompt looks ambiguous (≥3 empty slots, short length, no file-path anchors). The hook only injects a short reminder — it never auto-executes the skill, never modifies the prompt. The user must still type a trigger to start the workflow.
 
 ## The 5-slot contract
 
@@ -76,7 +76,7 @@ If a slot was force-skipped, write `<slot>(unspecified — clarify during execut
 ### 5. Present + Execute gate
 After the code block, ask via `AskUserQuestion`:
 
-> "이 프롬프트로 바로 실행할까요?"
+> "이 프롬프트로 바로 실행할까요? (Run this prompt now?)"
 > - **Execute now** — adopt the XML prompt as the active instruction and start the actual work in this session
 > - **Revise slot X** — re-grill that one slot, then re-emit
 > - **Just give me the prompt** — stop here; user will use it elsewhere
@@ -90,10 +90,9 @@ On **Execute now**: treat the XML-structured prompt as the new active instructio
 - Never silently invent constraints/success criteria — mark unspecified slots explicitly
 - Never auto-execute without the explicit "Execute now" approval gate
 - Never recurse: if invoked from inside a prompt-grill execution, refuse
-- The nudge hook is **advisory only**: it must yield to OMC magic keywords, respect the off-switch (env `OMC_DISABLE_PROMPT_GRILL_NUDGE=1` or `DISABLE_OMC=1` — settings.json schema does not accept custom top-level keys, so put the env var under `settings.json > env`), and self-silence after 3 unacknowledged nudges per session
+- The nudge hook is **advisory only**: it must respect the off-switch (env `PROMPT_GRILL_DISABLE_NUDGE=1` — settings.json schema does not accept custom top-level keys, so put the env var under `settings.json > env`) and self-silence after 3 unacknowledged nudges per session
 
 ## See also
 
 - `grill-me` — the relentless interview pattern this skill borrows
-- `oh-my-claudecode:deep-interview` — heavier, math-gated cousin for complex specs needing a written spec file
 - `write-a-skill` — meta-skill that produced this one

@@ -136,12 +136,10 @@ To disable without removing the entry, set an environment variable in the same s
 ```json
 {
   "env": {
-    "OMC_DISABLE_PROMPT_GRILL_NUDGE": "1"
+    "PROMPT_GRILL_DISABLE_NUDGE": "1"
   }
 }
 ```
-
-`DISABLE_OMC=1` disables the nudge as well.
 
 ## Skill behavior contract
 
@@ -154,7 +152,6 @@ To disable without removing the entry, set an environment variable in the same s
 ## Related
 
 - [`grill-me`](https://github.com/obra/superpowers) — the interview pattern this skill is based on.
-- `oh-my-claudecode:deep-interview` — heavier cousin for full spec documents.
 - `write-a-skill` — used to scaffold this skill.
 
 ## License
