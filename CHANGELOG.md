@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-05-11
+
+### Changed
+- Rewrote "Why XML" to remove inline-header lists, signposted rule of three, and a negative-parallelism closer (humanizer self-audit).
+
 ## [0.1.2] - 2026-05-10
 
 ### Added

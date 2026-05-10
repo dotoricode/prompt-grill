@@ -22,13 +22,15 @@ You type `/prompt-grill <vague request>`. The skill:
 
 ## Why XML
 
-Claude is trained on prompts that use XML tags as structural cues, and Anthropic's own prompt-engineering guide recommends them whenever the model needs to treat sections as distinct. I picked tags over markdown headings or YAML for three practical reasons:
+Anthropic's prompt-engineering guide points to XML tags as the cleanest way to mark distinct sections, and Claude has been trained on a lot of them. Markdown and YAML both work, but each costs something this skill needed to avoid.
 
-- **Boundaries are unambiguous.** A line that starts with `## Constraints` can be confused with content the user pasted in. `<constraints>...</constraints>` cannot.
-- **Slots are referenceable.** During execution the agent can say "the public-API rule in `<constraints>`" and point at exactly one place. Markdown sections do not survive that kind of reference.
-- **One slot is easy to revise.** When the execute gate offers "revise slot X", the skill rewrites only that tag. The rest of the prompt stays byte-identical.
+A line that starts with `## Constraints` can be confused with content the user pasted in. `<constraints>...</constraints>` cannot.
 
-The five tags map to the five slots verbatim. No nesting, no attributes, no hidden conventions.
+The agent also has to reference slots from inside its own reasoning. With XML tags it can say "the public-API rule in `<constraints>`" and point at exactly one place. Markdown sections do not survive that kind of reference.
+
+When the execute gate offers to revise a single slot, the skill rewrites only that tag. The rest of the prompt stays byte-identical, which is harder to guarantee when slots are markdown headings.
+
+The five tags map to the five slots verbatim, with no nesting and no attributes.
 
 ## The 5 slots
 
