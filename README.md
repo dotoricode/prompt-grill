@@ -1,5 +1,7 @@
 # prompt-grill
 
+[한국어](README.ko.md)
+
 A Claude Code skill that turns half-formed work requests into structured prompts your agent can actually execute against. It interviews you about the parts you skipped, then emits an XML prompt with five named slots.
 
 ## Why I built this
