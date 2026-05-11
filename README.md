@@ -90,6 +90,12 @@ Clone into Claude Code's skills directory:
 git clone https://github.com/dotoricode/prompt-grill.git ~/.claude/skills/prompt-grill
 ```
 
+If you use a custom skills path (e.g. `~/.claude-personal/skills`), replace the destination accordingly:
+
+```bash
+git clone https://github.com/dotoricode/prompt-grill.git ~/.claude-personal/skills/prompt-grill
+```
+
 Windows PowerShell:
 
 ```powershell
@@ -152,6 +158,7 @@ To disable without removing the entry, set an environment variable in the same s
 ## Related
 
 - [`grill-me`](https://github.com/mattpocock/skills) by Matt Pocock — the interview pattern this skill is based on.
+- [`cerberus`](https://github.com/dotoricode/cerberus) — wires prompt-grill (head 1), grill-me (head 2), and an intent gate (head 3) into a single 3-gate verification workflow.
 - `write-a-skill` — used to scaffold this skill.
 
 ## License

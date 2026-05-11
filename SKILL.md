@@ -1,6 +1,6 @@
 ---
 name: prompt-grill
-description: Convert vague natural-language work requests into AI-friendly XML-structured prompts, grilling the user grill-me-style on missing slots before translation. Use when user invokes /prompt-grill, says "프롬프트 다듬어줘 (sharpen this prompt)" / "grill 후 변환 (grill then translate)" / "AI가 알아듣게 바꿔줘 (make it AI-friendly)" / "prompt-grill", or hands off a vague task they want sharpened before execution.
+description: Turns vague work requests into 5-slot XML prompts by grilling the user on missing slots. Fire with /prompt-grill or "프롬프트 다듬어줘".
 ---
 
 # prompt-grill
